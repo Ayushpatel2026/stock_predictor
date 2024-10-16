@@ -6,6 +6,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from torch.optim.lr_scheduler import StepLR
+import numpy as np
 
 data = da.load_and_clean_data('data/all_stocks_5yr.csv')
 training = ['year', 'month', 'day', 'name_encoded']
@@ -28,8 +29,7 @@ inputs = torch.tensor(X_train_scaled, dtype=torch.float32)
 targets = torch.tensor(Y_train_scaled, dtype=torch.float32)
 
 input_size = len(training)  # 4 features
-hidden_size = 64  # We can experiment with this
-model = mlp.MLPTimeCompany(input_size, hidden_size1=32, hidden_size2=16, hidden_size3=8)
+model = mlp.MLPTimeCompany(input_size, hidden_size1=128, hidden_size2=64, hidden_size3=64)
 
 # Print model architecture
 print(model)
@@ -40,7 +40,7 @@ print(model)
 # for reproducibility
 g = torch.Generator().manual_seed(42)
 
-num_epochs = 10000
+num_epochs = 100000
 criterion = nn.MSELoss()  # Mean Squared Error for regression
 optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 batch_size = 256
@@ -112,3 +112,33 @@ def test_model(model, X_test, Y_test):
         print(f'Test Loss: {test_loss.item():.7f}')
 
 #test_model(model, X_test_scaled, Y_test_scaled)
+
+# Make predictions
+
+def make_predictions(model, X_test, Y_test, normal_scaler_y):
+    model.eval()
+    with torch.no_grad():
+        test_inputs = torch.tensor(X_test, dtype=torch.float32)
+        test_outputs = model(test_inputs)
+
+        # Inverse transform the scaled predictions
+        test_predictions = normal_scaler_y.inverse_transform(test_outputs.cpu().numpy())
+        test_actuals = normal_scaler_y.inverse_transform(Y_test)
+
+        # plot the predictions vs actuals
+        plt.figure(figsize=(12, 6))
+        plt.plot(test_actuals, label='Actual')
+        plt.plot(test_predictions, label='Predictions')
+        plt.title('Predictions vs Actuals')
+        plt.legend()
+        plt.show()
+
+        # Calculate MAPE - average percentage difference between predictions and actual values
+        mape = np.mean(np.abs((test_actuals - test_predictions) / test_actuals)) * 100
+        print(f'Mean Absolute Percentage Error: {mape:.2f}%')
+
+        # calculate RMSE - gives rough estimation of how far the model's predictions are from the actual values
+        rmse = np.sqrt(np.mean((test_predictions - test_actuals) ** 2))
+        print(f'Root Mean Squared Error: {rmse:.2f}')
+    
+make_predictions(model, X_test_scaled, Y_test_scaled, normal_scaler_y)
