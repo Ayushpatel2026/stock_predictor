@@ -1,6 +1,6 @@
 from matplotlib import pyplot as plt
 import data_analysis as da
-import MLP_time_company as mlp
+import mlp as mlp
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
@@ -8,8 +8,18 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from torch.optim.lr_scheduler import StepLR
 import numpy as np
 
+# Set seeds for reproducibility - only for testing purposes (TURN OFF WHEN TRAINING FINAL MODEL)
+def set_seed(seed):
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    # Make PyTorch deterministic - this will slow down the code but will make the results reproducible
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+set_seed(42)
+
 data = da.load_and_clean_data('data/all_stocks_5yr.csv')
-training = ['year', 'month', 'day', 'name_encoded']
+training = ['high', 'open', 'low', 'volume', 'year', 'month', 'day', 'name_encoded']
 
 # Split the data into training, validation, and test sets
 X_train, X_val, X_test, y_train, y_val, y_test = da.split_data(data, training)
@@ -28,8 +38,8 @@ Y_val_scaled = normal_scaler_y.transform(y_val.values.reshape(-1, 1))
 inputs = torch.tensor(X_train_scaled, dtype=torch.float32)
 targets = torch.tensor(Y_train_scaled, dtype=torch.float32)
 
-input_size = len(training)  # 4 features
-model = mlp.MLPTimeCompany(input_size, hidden_size1=128, hidden_size2=64, hidden_size3=64)
+input_size = len(training)  # 8 features
+model = mlp.MLP(input_size, hidden_size1=128, hidden_size2=64, hidden_size3=64)
 
 # Print model architecture
 print(model)
@@ -40,20 +50,20 @@ print(model)
 # for reproducibility
 g = torch.Generator().manual_seed(42)
 
-num_epochs = 100000
+num_epochs = 10000
 criterion = nn.MSELoss()  # Mean Squared Error for regression
 optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 batch_size = 256
 
 # Create a TensorDataset and DataLoader for minibatch training
 dataset = TensorDataset(inputs, targets)
-dataloader = DataLoader(dataset, batch_size=batch_size, generator=g)
+dataloader = DataLoader(dataset, batch_size=batch_size, generator=g, shuffle=True)
 train_losses = []
 epoch_losses = []
 val_losses = []
 
-# Learning rate decay - decrease LR every 2000 epochs by multiplying by 0.9
-scheduler = StepLR(optimizer, step_size=2000, gamma=0.9)
+# Learning rate decay - decrease LR every 2000 epochs by multiplying by 0.8
+scheduler = StepLR(optimizer, step_size=2000, gamma=0.8)
 
 # training loop
 for epoch in range(num_epochs):
@@ -111,7 +121,7 @@ def test_model(model, X_test, Y_test):
         test_loss = criterion(test_outputs, test_targets)
         print(f'Test Loss: {test_loss.item():.7f}')
 
-#test_model(model, X_test_scaled, Y_test_scaled)
+test_model(model, X_test_scaled, Y_test_scaled)
 
 # Make predictions
 
@@ -124,14 +134,6 @@ def make_predictions(model, X_test, Y_test, normal_scaler_y):
         # Inverse transform the scaled predictions
         test_predictions = normal_scaler_y.inverse_transform(test_outputs.cpu().numpy())
         test_actuals = normal_scaler_y.inverse_transform(Y_test)
-
-        # plot the predictions vs actuals
-        plt.figure(figsize=(12, 6))
-        plt.plot(test_actuals, label='Actual')
-        plt.plot(test_predictions, label='Predictions')
-        plt.title('Predictions vs Actuals')
-        plt.legend()
-        plt.show()
 
         # Calculate MAPE - average percentage difference between predictions and actual values
         mape = np.mean(np.abs((test_actuals - test_predictions) / test_actuals)) * 100
