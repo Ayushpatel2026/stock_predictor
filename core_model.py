@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from torch.optim.lr_scheduler import StepLR
 import numpy as np
+import pickle
 
 # Set seeds for reproducibility - only for testing purposes (TURN OFF WHEN TRAINING FINAL MODEL)
 def set_seed(seed):
@@ -16,7 +17,7 @@ def set_seed(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-set_seed(42)
+# set_seed(42)
 
 data = da.load_and_clean_data('data/all_stocks_5yr.csv')
 training = ['high', 'open', 'low', 'volume', 'year', 'month', 'day', 'name_encoded']
@@ -33,6 +34,12 @@ normal_scaler_y = MinMaxScaler()
 Y_train_scaled = normal_scaler_y.fit_transform(y_train.values.reshape(-1, 1))
 Y_test_scaled = normal_scaler_y.transform(y_test.values.reshape(-1, 1))
 Y_val_scaled = normal_scaler_y.transform(y_val.values.reshape(-1, 1))
+
+# store the scalers for later use
+with open('data/scaler_x.pkl', 'wb') as f:
+    pickle.dump(normal_scaler_x, f)
+with open('data/scaler_y.pkl', 'wb') as f:
+    pickle.dump(normal_scaler_y, f)
 
 # Convert data to PyTorch tensors
 inputs = torch.tensor(X_train_scaled, dtype=torch.float32)
@@ -144,3 +151,6 @@ def make_predictions(model, X_test, Y_test, normal_scaler_y):
         print(f'Root Mean Squared Error: {rmse:.2f}')
     
 make_predictions(model, X_test_scaled, Y_test_scaled, normal_scaler_y)
+
+# Save the model
+torch.save(model.state_dict(), 'models/core_mlp_model.pth')

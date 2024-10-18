@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+import pickle
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
@@ -34,6 +34,10 @@ def load_and_clean_data(filepath):
     # however we cannot do one-hot encoding because there are 505 companies, which would mean 505 new columns
     le = LabelEncoder()
     data['name_encoded'] = le.fit_transform(data['name'])
+
+    # save the encoder for later use
+    with open('data/company_name_encoder.pkl', 'wb') as f:
+        pickle.dump(le, f)
 
     return data
 

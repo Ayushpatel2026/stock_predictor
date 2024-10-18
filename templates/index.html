@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+        <title>Index</title>
+    </head>
+    <body>
+        <h1 class="text-center">
+            Stock Predictor Using Neural Network
+        </h1>
+
+        <form class="p-3" action='/' method="post">
+            <div class="mb-3">
+                <label for="date" class="form-label">Date</label>
+                <input class="form-control" type="date" name="date" required>
+            </div>
+            <div class="mb-3">
+                <label for="volume" class="form-label">Volume</label>
+                <input class="form-control" type="number" name="volume" required>
+            </div>
+            <div class="mb-3">
+                <label for="company_name" class="form-label">Company Name - (Ticker)</label>
+                <input class="form-control" type="text" name="company_name" required>
+            </div>
+            <div class="mb-3">
+                <label for="high" class="form-label">High</label>
+                <input class="form-control" type="number" step="any" name="high" required>
+            </div>
+            <div class="mb-3">
+                <label for="low" class="form-label">Low</label>
+                <input class="form-control" type="number" step="any" name="low" required>
+            </div>
+            <div class="mb-3">
+                <label for="open" class="form-label">Opening Price</label>
+                <input class="form-control" type="number" step="any" name="open" required>
+            </div>
+            <input class="btn btn-primary mt-3" type="submit" value="Predict Price">
+        </form>
+
+        {% if prediction %}
+            <div>
+                <h2 class="text-center">Prediction</h2>
+                <p class="text-center">The closing price of this stock is expected to be: <strong>${{ prediction }}</strong></p>
+                <h4 class="text-center">Your Inputs:</h4>
+                <ul class="list-unstyled text-center">
+                    <li><strong>Date:</strong> {{ input.date }}</li>
+                    <li><strong>Volume:</strong> {{ input.volume }}</li>
+                    <li><strong>Company Name:</strong> {{ input.company_name }}</li>
+                    <li><strong>High:</strong> {{ input.high }}</li>
+                    <li><strong>Low:</strong> {{ input.low }}</li>
+                    <li><strong>Open Price:</strong> {{ input.open }}</li>
+                </ul>
+            </div>
+        {% endif %}
+    </body>
+</html>
