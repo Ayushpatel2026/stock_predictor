@@ -66,4 +66,4 @@ def input():
     return render_template('index.html', prediction=predicted_price, input=request.form)
 
 if __name__ == '__main__':
-    app.run(port=3000, debug=True)
+    app.run(port=5001, debug=True)

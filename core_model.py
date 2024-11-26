@@ -132,7 +132,7 @@ test_model(model, X_test_scaled, Y_test_scaled)
 
 # Make predictions
 
-def make_predictions(model, X_test, Y_test, normal_scaler_y):
+def evaluate_model(model, X_test, Y_test, normal_scaler_y):
     model.eval()
     with torch.no_grad():
         test_inputs = torch.tensor(X_test, dtype=torch.float32)
@@ -150,7 +150,7 @@ def make_predictions(model, X_test, Y_test, normal_scaler_y):
         rmse = np.sqrt(np.mean((test_predictions - test_actuals) ** 2))
         print(f'Root Mean Squared Error: {rmse:.2f}')
     
-make_predictions(model, X_test_scaled, Y_test_scaled, normal_scaler_y)
+evaluate_model(model, X_test_scaled, Y_test_scaled, normal_scaler_y)
 
 # Save the model
 torch.save(model.state_dict(), 'models/core_mlp_model.pth')
